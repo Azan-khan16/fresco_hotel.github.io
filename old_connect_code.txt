@@ -1,0 +1,76 @@
+<?php
+session_start();
+
+// initializing variables
+$username = "";
+$email    = "";
+$errors = array(); 
+
+// connect to the databases
+$db = mysqli_connect('localhost', 'root', '', 'hotelbooking');
+if(!$db){
+  die('Connection Failed:'. mysqli_connect_error());
+}
+
+
+// REGISTER USER
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+  // receive all input values from the form
+  $name = mysqli_real_escape_string($db, $_POST['name']);
+  $email = mysqli_real_escape_string($db, $_POST['email']);
+  $phone = mysqli_real_escape_string($db, $_POST['phone']);
+  $relative_phone = mysqli_real_escape_string($db, $_POST['relative_phone']);
+  $cnic = mysqli_real_escape_string($db, $_POST['cnic']);
+  $address = mysqli_real_escape_string($db, $_POST['address']);
+  $check_in = mysqli_real_escape_string($db, $_POST['check_in']);
+  $check_out = mysqli_real_escape_string($db, $_POST['check_out']);
+  
+
+  // first check the database to make sure 
+  // a user does not already exist with the same username and/or email
+  $user_check_query = "SELECT * FROM user WHERE username='$username' OR email='$email' LIMIT 1";
+$result = mysqli_query($db, $user_check_query);
+
+if ($result) {
+  // Query executed successfully, fetch the result
+  $user = mysqli_fetch_assoc($result);
+
+  if ($user) {
+    // User already exists
+    if ($user['username'] === $username) {
+      array_push($errors, "Username already exists");
+    }
+
+    if ($user['email'] === $email) {
+      array_push($errors, "Email already exists");
+    }
+  }
+} else {
+  // Query failed, print the error message
+  echo "Error: " . mysqli_error($db);
+}
+
+
+  // Finally, register user if there are no errors in the form
+  if (count($errors) == 0) {
+
+  	$query = "INSERT INTO user_reservation VALUES ('$name','$email','$phone','$relative_phone','$cnic','$address','$check_in','$check_out')";
+        
+  	if(mysqli_query($db, $query)){
+      echo "<h3>data stored in a database successfully."
+          . " Please browse your localhost php my admin"
+          . " to view the updated data</h3>";
+
+      echo nl2br("\n$name\n $email\n "
+          . "$phone\n $relative_phone\n $cninc\n $address");
+  } else{
+      echo "ERROR: Hush! Sorry $query. "
+          . mysqli_error($db);
+  }
+
+  	$_SESSION['username'] = $username;
+  }
+}
+
+
+?>
